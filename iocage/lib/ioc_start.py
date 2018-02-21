@@ -258,6 +258,14 @@ class IOCStart(object):
                 _callback=self.callback,
                 silent=self.silent)
 
+        # Get jail ID and environment to pass to exec_p* commands:
+        _, jid = iocage.lib.ioc_list.IOCList().list_get_jid(self.uuid)
+        env_dict = os.environ.copy()
+        env_dict.update({"JID": f"{jid}",
+                         "HOSTNAME": f"{host_hostname}",
+                         "JAILNAME": f"ioc-{self.uuid}",
+                         "UUID": f"{self.uuid}"})
+
         start = su.Popen([x for x in ["jail", "-c"] + net +
                           [f"name=ioc-{self.uuid}",
                            f"host.domainname={host_domainname}",
@@ -297,7 +305,7 @@ class IOCStart(object):
                            f"exec.consolelog={self.iocroot}/log/ioc-"
                            f"{self.uuid}-console.log",
                            "persist"] if x != ''], stdout=su.PIPE,
-                         stderr=su.PIPE)
+                         stderr=su.PIPE, env=env_dict)
 
         stdout_data, stderr_data = start.communicate()
 
